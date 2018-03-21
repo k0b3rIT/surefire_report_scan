@@ -126,7 +126,7 @@ printRerunCommand() {
   #REPORT_SCAN_MVN="mvn clean install -Dtest='{tests}' -Pitests,hadoop-2 -Dmaven.surefire.plugin.version=2.20.1"
 
   if [[ -z "${REPORT_SCAN_MVN}" ]]; then
-    BASE_COMMAND="{tests}"
+    BASE_COMMAND="mvn clean install -Dtest='{tests}' -Pitests,hadoop-2 -Dmaven.surefire.plugin.version=2.20.1"
   else
     BASE_COMMAND=${REPORT_SCAN_MVN}
   fi
