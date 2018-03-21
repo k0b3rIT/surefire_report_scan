@@ -4,13 +4,6 @@
 # by bkondrat
 
 
-#set -u -e
-
-
-
-#environment variable-ben a command amibe bele illeszti
-
-
 ALL_TEST=0
 ALL_FAIL=0
 ALL_SKIPPED=0
@@ -105,9 +98,6 @@ printResultsFromFile() {
       fi
 
     fi
-    #echo "-------------------------------------------"
-
-
 
     ALL_TEST=$(($ALL_TEST+$NUM_OF_TESTS))
     ALL_ERRORS=$(($ALL_ERRORS+$NUM_OF_ERRORS))
@@ -151,7 +141,8 @@ printRerunCommand() {
 
   COMMAND=$(echo $BASE_COMMAND | sed -e "s/{tests}/${CONCATED_TESTS}/")
 
-  echo $COMMAND
+  [ ! -z "$CONCATED_TESTS" ] && echo $COMMAND
+  
 }
 
 
