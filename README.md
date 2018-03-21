@@ -3,6 +3,8 @@ Surefire report scanner script
 Bash script to scan trough all surefire-report folder in path and summarize test results
 
 
+![Image of report](https://github.com/k0b3rIT/surefire_report_scan/blob/master/example.png)
+
 Dependency
 ----------
 This script uses **xmlstarlet** to parse xml files
