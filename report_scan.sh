@@ -65,9 +65,19 @@ printTestResult() {
 
 #$1 testResultXmlFile
 printResultsFromFile() {
+    FILE=$1
     
+    FILESIZE=$(du -k $FILE | cut -f1)
 
-    Failures=$(xmlstarlet sel -t -v "testsuite/@failures" $1)
+    if (( $FILESIZE > 10000 ));then
+      FILENAME=$(echo $FILE | awk -F'/' '{print $NF}')
+      TEMP_FILE="/tmp/reportscan/${FILENAME}"
+      mkdir -p /tmp/reportscan
+      cat $FILE | tr '\n' '\r' | sed -E 's/<system-out>.*<\/system-out>//' | sed -E 's/<system-err>.*<\/system-err>//' >> $TEMP_FILE
+      FILE=$TEMP_FILE
+    fi
+
+    Failures=$(xmlstarlet sel -t -v "testsuite/@failures" $FILE)
 
     ALL_FAIL=$(($ALL_FAIL+$Failures))
 
@@ -75,10 +85,10 @@ printResultsFromFile() {
       Failures="[31m ${Failures} [0m"
     fi
 
-    NUM_OF_FAILURES=$(xmlstarlet sel -t -v "testsuite/@failures" $1)
-    NUM_OF_ERRORS=$(xmlstarlet sel -t -v "testsuite/@errors" $1)
-    NUM_OF_SKIPPED=$(xmlstarlet sel -t -v "testsuite/@skipped" $1)
-    NUM_OF_TESTS=$(xmlstarlet sel -t -v "testsuite/@tests" $1)
+    NUM_OF_FAILURES=$(xmlstarlet sel -t -v "testsuite/@failures" $FILE)
+    NUM_OF_ERRORS=$(xmlstarlet sel -t -v "testsuite/@errors" $FILE)
+    NUM_OF_SKIPPED=$(xmlstarlet sel -t -v "testsuite/@skipped" $FILE)
+    NUM_OF_TESTS=$(xmlstarlet sel -t -v "testsuite/@tests" $FILE)
 
     HAS_FAILED=0
 
@@ -86,7 +96,7 @@ printResultsFromFile() {
       HAS_FAILED=1
     fi
 
-    SUIT=$(xmlstarlet sel -t -v "testsuite/@name" $1)
+    SUIT=$(xmlstarlet sel -t -v "testsuite/@name" $FILE)
     SUIT=$(echo $SUIT | awk -F'.' '{print $NF}')
 
     if [ $IS_VERBOSE == 1 ] || [ $HAS_FAILED == 1 ];then
@@ -105,17 +115,22 @@ printResultsFromFile() {
     
     [ $IS_VERBOSE == 1 ] && echo "    Run:" $NUM_OF_TESTS "Failures:" $Failures "Errors:" $NUM_OF_ERRORS "Skipped:" $NUM_OF_SKIPPED
     
-    TEST_RESULT=$(xmlstarlet sel -t -v "testsuite/testcase/@name" $1)
+    TEST_RESULT=$(xmlstarlet sel -t -v "testsuite/testcase/@name" $FILE)
     for element in $TEST_RESULT
       do
-        printTestResult "$element" "$1"
+        printTestResult "$element" "$FILE"
       done
+
+    if [ ! -z "$TEMP_FILE" ];then
+      rm $TEMP_FILE
+      TEMP_FILE=""
+    fi
 
     [ $IS_VERBOSE == 1 ] && echo ""
 }
 
 printResultsFromFolder() {
-    XML_FILES=$(find $1 -name '*.xml')
+    XML_FILES=$(find . -name 'TEST*.xml')
     for element in $XML_FILES
       do
         printResultsFromFile "$element"  
@@ -157,13 +172,9 @@ for element in ${CLI_ARGUMENTS[@]}
     done
 
 
-#Find surefire report folders in current dir
-REPORT_FOLDERS=$(find . -name 'surefire-reports')
+#Find surefire reports in current dir
+printResultsFromFolder
 
-for element in $REPORT_FOLDERS
-    do
-      printResultsFromFolder "$element"  
-    done
 
 
 
