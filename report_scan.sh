@@ -26,9 +26,9 @@ TESTS_TO_RERUN=()
 #$2 testResultXmlFile
 printTestResult() {
 
-  HAS_FAIL=$(xmlstarlet sel -t -c "testsuite/testcase[@name='$1']/failure" $2)
-  IS_SKIPPED=$(xmlstarlet sel -t -c "testsuite/testcase[@name='$1']/skipped" $2)
-  HAS_ERROR=$(xmlstarlet sel -t -c "testsuite/testcase[@name='$1']/error" $2)
+  HAS_FAIL=$(xmlstarlet sel -t -c "testsuite/testcase[@name=\"$1\"]/failure" $2)
+  IS_SKIPPED=$(xmlstarlet sel -t -c "testsuite/testcase[@name=\"$1\"]/skipped" $2)
+  HAS_ERROR=$(xmlstarlet sel -t -c "testsuite/testcase[@name=\"$1\"]/error" $2)
 
   TEST_NAME="[32m ${1} [0m"
 
@@ -117,7 +117,8 @@ printResultsFromFile() {
     
     [ $IS_VERBOSE == 1 ] && echo "    Run:" $NUM_OF_TESTS "Failures:" $Failures "Errors:" $NUM_OF_ERRORS "Skipped:" $NUM_OF_SKIPPED
     
-    TEST_RESULT=$(xmlstarlet sel -t -v "testsuite/testcase/@name" $FILE)
+    TEST_RESULT=$(xmlstarlet sel -t -v 'testsuite/testcase/@name' $FILE)
+    local IFS=$'\n'
     for element in $TEST_RESULT
       do
         printTestResult "$element" "$FILE"
