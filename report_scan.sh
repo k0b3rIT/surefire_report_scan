@@ -12,6 +12,8 @@ ALL_ERRORS=0
 VERBOSE_ARGUMENT="-q"
 PRINT_FILENAME_FOR_FAILED_TEST_ARGUMENT="-d"
 PRINT_RERUN_COMMAND_ARGUMENT="-r"
+PRINT_HELP_ARG="--help"
+PRINT_HELP_ARG2="-h"
 
 PRINT_RERUN=0
 DETAILED_ERROR=0
@@ -160,6 +162,19 @@ printRerunCommand() {
   
 }
 
+printhelp() {
+  echo "Surefire report scanner script"
+  echo "  Usage:"
+  echo "    cd into the folder you want to scan through for report files and execute the command: reportscan -r -d"
+  echo "    The script use the following regex to find report files: 'TEST*.xml'"
+  echo "  Args:"
+  echo "    -r (rerun) print rerun mvn command. You can use REPORT_SCAN_MVN environment variable to define the base mvn command"
+  echo "        Export REPORT_SCAN_MVN environment variable with value: mvn clean install -Dtests='{tests}'"
+  echo "        The script will find the {tests} pattern in your command, and replace it with the failing tests"
+  echo "    -d (detailed) print xml file path in case of failed tests"
+  echo "    -q (quiet) print just the failed tests"
+}
+
 
 
 CLI_ARGUMENTS=( "$@" )
@@ -168,7 +183,9 @@ for element in ${CLI_ARGUMENTS[@]}
     do
       [[ "$element" == "$VERBOSE_ARGUMENT" ]] && IS_VERBOSE=0
       [[ "$element" == "$PRINT_FILENAME_FOR_FAILED_TEST_ARGUMENT" ]] && DETAILED_ERROR=1
-      [[ "$element" == "$PRINT_RERUN_COMMAND_ARGUMENT" ]] && PRINT_RERUN=1    
+      [[ "$element" == "$PRINT_RERUN_COMMAND_ARGUMENT" ]] && PRINT_RERUN=1
+      [[ "$element" == "$PRINT_HELP_ARG" ]] && printhelp && exit 0
+      [[ "$element" == "$PRINT_HELP_ARG2" ]] && printhelp && exit 0
     done
 
 
