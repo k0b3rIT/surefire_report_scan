@@ -14,11 +14,12 @@ PRINT_FILENAME_FOR_FAILED_TEST_ARGUMENT="-d"
 PRINT_RERUN_COMMAND_ARGUMENT="-r"
 PRINT_HELP_ARG="--help"
 PRINT_HELP_ARG2="-h"
+PRINT_RAW_ARG="-w"
 
 PRINT_RERUN=0
 DETAILED_ERROR=0
 IS_VERBOSE=1
-
+RAW_OUTPUT=0
 
 TESTS_TO_RERUN=()
 
@@ -30,25 +31,25 @@ printTestResult() {
   IS_SKIPPED=$(xmlstarlet sel -t -c "testsuite/testcase[@name=\"$1\"]/skipped" $2)
   HAS_ERROR=$(xmlstarlet sel -t -c "testsuite/testcase[@name=\"$1\"]/error" $2)
 
-  TEST_NAME="[32m ${1} [0m"
+  TEST_NAME="[32m${1}[0m"
 
   SUCCESS=1
 
   if [ ! -z "$HAS_FAIL" ]; then
     SUCCESS=0
-    TEST_NAME="[31m ${1} [0m"
+    TEST_NAME="[31m${1}[0m"
   elif [  ! -z "$IS_SKIPPED" ]; then
     SUCCESS=0
-    TEST_NAME="[36m ${1} [0m"
+    TEST_NAME="[36m${1}[0m"
   elif [ ! -z "$HAS_ERROR" ]; then
     SUCCESS=0
-    TEST_NAME="[35m ${1} [0m"
+    TEST_NAME="[35m${1}[0m"
   fi
 
+  RAW_SUIT=$(xmlstarlet sel -t -v "testsuite/@name" $2)
 
-  if [ $SUCCESS == 0 ];then
-    SUIT=$(xmlstarlet sel -t -v "testsuite/@name" $2)
-    SUIT=$(echo $SUIT | awk -F'.' '{print $NF}')
+  if [ $SUCCESS == 0 ];then  
+    SUIT=$(echo $RAW_SUIT | awk -F'.' '{print $NF}')
     if [[ $1 = *"."* ]]; then
       COMMAND="${SUIT}"
     else
@@ -59,7 +60,15 @@ printTestResult() {
 
   
   if [ $IS_VERBOSE == 1 ] || [ $SUCCESS == 0 ];then #if verbose or testfail
-    echo "        "$TEST_NAME
+    if [ $RAW_OUTPUT == 1 ];then
+      if [ $SUCCESS == 1 ];then
+        echo "${RAW_SUIT}#${1}"
+      else
+        echo "FAILED ${RAW_SUIT}#${1}"
+      fi
+    else
+      echo "        "$TEST_NAME
+    fi
   fi
 }
 
@@ -101,22 +110,26 @@ printResultsFromFile() {
     SUIT=$(xmlstarlet sel -t -v "testsuite/@name" $FILE)
     SUIT=$(echo $SUIT | awk -F'.' '{print $NF}')
 
-    if [ $IS_VERBOSE == 1 ] || [ $HAS_FAILED == 1 ];then
-      
-      if [ $DETAILED_ERROR == 1 ] && [ $HAS_FAILED == 1 ];then
-        echo [33m$SUIT[0m"       "$1
-      else
-        echo [33m$SUIT[0m
-      fi
+    if [ $RAW_OUTPUT == 0 ];then
+      if [ $IS_VERBOSE == 1 ] || [ $HAS_FAILED == 1 ];then
+        
+        if [ $DETAILED_ERROR == 1 ] && [ $HAS_FAILED == 1 ];then
+          echo [33m$SUIT[0m"       "$1
+        else
+          echo [33m$SUIT[0m
+        fi
 
+      fi
     fi
 
     ALL_TEST=$(($ALL_TEST+$NUM_OF_TESTS))
     ALL_ERRORS=$(($ALL_ERRORS+$NUM_OF_ERRORS))
     ALL_SKIPPED=$(($ALL_SKIPPED+$NUM_OF_SKIPPED))
     
-    [ $IS_VERBOSE == 1 ] && echo "    Run:" $NUM_OF_TESTS "Failures:" $Failures "Errors:" $NUM_OF_ERRORS "Skipped:" $NUM_OF_SKIPPED
-    
+    if [ $IS_VERBOSE == 1 ] && [ $RAW_OUTPUT == 0 ];then
+      echo "    Run:" $NUM_OF_TESTS "Failures:" $Failures "Errors:" $NUM_OF_ERRORS "Skipped:" $NUM_OF_SKIPPED
+    fi
+
     TEST_RESULT=$(xmlstarlet sel -t -v 'testsuite/testcase/@name' $FILE)
     local IFS=$'\n'
     for element in $TEST_RESULT
@@ -129,7 +142,9 @@ printResultsFromFile() {
       TEMP_FILE=""
     fi
 
-    [ $IS_VERBOSE == 1 ] && echo ""
+    if [ $IS_VERBOSE == 1 ] && [ $RAW_OUTPUT == 0 ];then
+      echo ""
+    fi
 }
 
 printResultsFromFolder() {
@@ -187,6 +202,7 @@ for element in ${CLI_ARGUMENTS[@]}
       [[ "$element" == "$PRINT_RERUN_COMMAND_ARGUMENT" ]] && PRINT_RERUN=1
       [[ "$element" == "$PRINT_HELP_ARG" ]] && printhelp && exit 0
       [[ "$element" == "$PRINT_HELP_ARG2" ]] && printhelp && exit 0
+      [[ "$element" == "$PRINT_RAW_ARG" ]] && RAW_OUTPUT=1
     done
 
 
@@ -195,12 +211,13 @@ printResultsFromFolder
 
 
 
-
-echo "[34m-----------------------------------------------------------"
-echo "    S U M M A R Y"
-echo "-----------------------------------------------------------[0m"
-echo "Total run:[32m" $ALL_TEST "[0mFailures:[31m" $ALL_FAIL "[0mErrors:[35m" $ALL_ERRORS "[0mSkipped:[36m" $ALL_SKIPPED "[0m"
-echo ""
+if [ $RAW_OUTPUT == 0 ];then
+  echo "[34m-----------------------------------------------------------"
+  echo "    S U M M A R Y"
+  echo "-----------------------------------------------------------[0m"
+  echo "Total run:[32m" $ALL_TEST "[0mFailures:[31m" $ALL_FAIL "[0mErrors:[35m" $ALL_ERRORS "[0mSkipped:[36m" $ALL_SKIPPED "[0m"
+  echo ""
+fi
 
 if [ $PRINT_RERUN == 1 ]; then
   printRerunCommand
