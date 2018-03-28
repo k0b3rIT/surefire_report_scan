@@ -191,8 +191,10 @@ printhelp() {
   echo "    -r (rerun) print rerun mvn command. You can use REPORT_SCAN_MVN environment variable to define the base mvn command"
   echo "        Export REPORT_SCAN_MVN environment variable with value: mvn clean install -Dtests='{tests}'"
   echo "        The script will find the {tests} pattern in your command, and replace it with the failing tests"
+  echo "    -ra (rerun all) print rerun command for all tests"
   echo "    -d (detailed) print xml file path in case of failed tests"
   echo "    -q (quiet) print just the failed tests"
+  echo "    -w (raw) print raw output"
 }
 
 
