@@ -12,6 +12,7 @@ ALL_ERRORS=0
 VERBOSE_ARGUMENT="-q"
 PRINT_FILENAME_FOR_FAILED_TEST_ARGUMENT="-d"
 PRINT_RERUN_COMMAND_ARGUMENT="-r"
+RERUN_ALL_COMMAND_ARGUMENT="-ra"
 PRINT_HELP_ARG="--help"
 PRINT_HELP_ARG2="-h"
 PRINT_RAW_ARG="-w"
@@ -20,6 +21,7 @@ PRINT_RERUN=0
 DETAILED_ERROR=0
 IS_VERBOSE=1
 RAW_OUTPUT=0
+RERUN_ALL=0
 
 TESTS_TO_RERUN=()
 
@@ -48,13 +50,15 @@ printTestResult() {
 
   RAW_SUIT=$(xmlstarlet sel -t -v "testsuite/@name" $2)
 
-  if [ $SUCCESS == 0 ];then  
-    SUIT=$(echo $RAW_SUIT | awk -F'.' '{print $NF}')
-    if [[ $1 = *"."* ]]; then
-      COMMAND="${SUIT}"
-    else
-      COMMAND="${SUIT}#${1}"
-    fi
+ 
+  SUIT=$(echo $RAW_SUIT | awk -F'.' '{print $NF}')
+  if [[ $1 = *"."* ]]; then
+    COMMAND="${SUIT}"
+  else
+    COMMAND="${SUIT}#${1}"
+  fi
+
+  if [ $SUCCESS == 0 ] || [ $RERUN_ALL == 1 ];then 
     TESTS_TO_RERUN+=($COMMAND)
   fi
 
@@ -203,6 +207,7 @@ for element in ${CLI_ARGUMENTS[@]}
       [[ "$element" == "$PRINT_HELP_ARG" ]] && printhelp && exit 0
       [[ "$element" == "$PRINT_HELP_ARG2" ]] && printhelp && exit 0
       [[ "$element" == "$PRINT_RAW_ARG" ]] && RAW_OUTPUT=1
+      [[ "$element" == "$RERUN_ALL_COMMAND_ARGUMENT" ]] && RERUN_ALL=1  
     done
 
 
@@ -219,7 +224,7 @@ if [ $RAW_OUTPUT == 0 ];then
   echo ""
 fi
 
-if [ $PRINT_RERUN == 1 ]; then
+if [ $PRINT_RERUN == 1 ] || [ $RERUN_ALL == 1 ]; then
   printRerunCommand
 fi
 
